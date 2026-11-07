@@ -102,6 +102,15 @@
 <input type="hidden" id="category">
 <section class="pane"><h2 class="h-lg">What needs fixing?</h2><div class="options" id="opts" role="radiogroup" aria-label="Service"></div></section>
 <section class="pane" hidden><h2 class="h-lg">Where and when?</h2>
+<div class="service-method-wrap" id="serviceMethodWrap" hidden>
+  <div class="field">
+    <label>How would you like the repair?</label>
+    <div class="service-methods">
+      <label><input type="radio" name="serviceMethod" value="store" onchange="toggleServiceMethod()"><span><strong>Visit the store</strong><small>Bring your device to the technician</small></span></label>
+      <label><input type="radio" name="serviceMethod" value="home" onchange="toggleServiceMethod()" checked><span><strong>Technician visits you</strong><small>We come to your location</small></span></label>
+    </div>
+  </div>
+</div>
 <div class="field">
   <label for="area">Location</label>
   <label class="where"><svg class="ic"><use href="#i-pin"/></svg><input id="area" placeholder="Type area or address, e.g. Al Sadd" aria-label="Area or address" required></label>
@@ -125,7 +134,7 @@
 <p class="label muted">Demo only. No technician is dispatched and no payment is taken.</p>
 </section>
 <section class="pane" hidden><h2 class="h-lg">Available technicians</h2>
-  <p class="label muted">Compare independent technicians, their prices and track records. Open a profile to see more details.</p>
+  <p class="label muted" id="providerSelectionHelp">Compare independent technicians, their prices and track records. Open a profile to see more details.</p>
   <div class="pro-list" id="availablePros"></div>
   <p class="label muted" id="selectedProNote">Choose a technician to continue.</p>
 </section>
@@ -173,4 +182,3 @@
 <script src="script.js" defer></script>
 </body>
 </html>
-

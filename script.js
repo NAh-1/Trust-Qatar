@@ -109,8 +109,32 @@ Object.entries(extraDemoTechnicians).forEach(([category, list]) => {
 });
 
 let selectedTechnician = null;
+let selectedStore = null;
 const priceOf=c=>prices[c]||'Quote';
+const repairStores={
+  'Laptop repair':[
+    {id:'store-lt1',name:'ByteCare Workshop',area:'Doha · Msheireb',hours:'Open today · 8:00 AM–10:00 PM',rating:'4.8',person:'Arjun P.'},
+    {id:'store-lt2',name:'TechBench Doha',area:'Doha · Al Sadd',hours:'Open today · 9:00 AM–9:00 PM',rating:'4.7',person:'Mohan R.'}
+  ],
+  'Phone repair':[
+    {id:'store-ph1',name:'MobileMedic',area:'Doha · Al Sadd',hours:'Open today · 8:00 AM–10:00 PM',rating:'4.9',person:'Bilal A.'},
+    {id:'store-ph2',name:'QuickFix Mobiles',area:'Doha · Old Airport',hours:'Open today · 9:00 AM–11:00 PM',rating:'4.6',person:'Kevin D.'}
+  ]
+};
 function renderTechnicians(){
+  const storeVisit=document.querySelector('input[name="serviceMethod"]:checked')?.value==='store';
+  if(storeVisit && repairStores[$('category').value]){
+    const list=repairStores[$('category').value];
+    $('providerSelectionHelp').textContent='Choose the repair store you want to visit. Store details and opening hours are shown below.';
+    $('availablePros').innerHTML=list.map(store=>`<article class="pro-card ${selectedStore===store.id?'selected':''}">
+      <div class="pro-avatar">${esc(store.name.split(' ').map(x=>x[0]).slice(0,2).join(''))}</div>
+      <div class="pro-meta"><strong>${esc(store.name)}</strong><span class="label muted">★ ${store.rating} · ${esc(store.area)}</span><span class="label muted">${esc(store.hours)}</span><span class="label muted">Technician: ${esc(store.person)}</span></div>
+      <div class="pro-actions"><button type="button" class="btn btn-primary" onclick="chooseStore('${store.id}')">${selectedStore===store.id?'Selected':'Choose store'}</button></div>
+    </article>`).join('');
+    $('selectedProNote').textContent=selectedStore?'Selected store: '+list.find(store=>store.id===selectedStore).name+'. Continue to enter your repair details.':'Choose a store to continue.';
+    return;
+  }
+  $('providerSelectionHelp').textContent='Compare independent technicians, their prices and track records. Open a profile to see more details.';
   const list=technicians[$('category').value]||technicians['Home maintenance'];
   $('availablePros').innerHTML=list.map(t=>`<article class="pro-card ${selectedTechnician===t.id?'selected':''}">
     <div class="pro-avatar">${esc(t.name.split(' ').map(x=>x[0]).slice(0,2).join(''))}</div>
@@ -123,11 +147,25 @@ function showTechnician(id){
   const t=Object.values(technicians).flat().find(x=>x.id===id); if(!t)return;
   $('techProfileContent').innerHTML=`<div class="pro-meta" style="margin-bottom:16px"><div class="pro-avatar">${esc(t.name.split(' ').map(x=>x[0]).slice(0,2).join(''))}</div><h3 class="h-lg">${esc(t.name)}</h3><p class="muted">${esc(t.person)} · ${t.verified?'Identity & skills checked':'Profile'}</p><p>★ ${t.rating} / 5 · ${t.reviews} customer reviews</p></div>
   <div class="profile-stats"><div class="profile-stat"><strong class="h-lg">${t.jobs}</strong><p class="label muted">Jobs done</p></div><div class="profile-stat"><strong class="h-lg">${t.years} yrs</strong><p class="label muted">Experience</p></div><div class="profile-stat"><strong class="h-lg">QAR ${t.price}</strong><p class="label muted">Starting price</p></div></div>
-  <div style="display:grid;gap:8px;margin:16px 0"><strong>About</strong><p class="muted">${esc(t.bio)}</p><strong>Past work</strong><ul>${t.work.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul><strong>Recent reviews</strong>${t.reviewList.map(r=>'<div class="review"><strong>'+esc(r[0])+'</strong><p class="muted">'+esc(r[1])+'</p></div>').join('')}</div>
+  <div style="display:grid;gap:8px;margin:16px 0">
+  <div class="fairness-note"><strong>Balanced reviews</strong><p>Only completed, verified jobs can affect this score. A technician may respond publicly, and flagged reviews are checked by TrustQatar before they can reduce ratings.</p></div>
+  <strong>About</strong><p class="muted">${esc(t.bio)}</p><strong>Past work</strong><ul>${t.work.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>
+  <strong>Customer behavior rating</strong><div class="mutual-rating"><strong>4.9 ★</strong><span class="label muted">from ${Math.max(t.reviews-12,1)} mutually rated completed jobs</span></div>
+  <strong>Recent customer reviews</strong>${t.reviewList.map((r,i)=>`<div class="review"><strong>${esc(r[0])}</strong><p class="muted">${esc(r[1])}</p><div class="technician-response"><strong>${esc(t.person)}'s response</strong><p>${esc(i===0?'I understand your concern and checked the job notes. This repair was completed according to the approved quote, and any remaining warranty is available through the store.':'Thank you for the feedback. I reviewed the customer notes and delivery time, and will use this feedback to improve my service.')}</p></div></div>`).join('')}</div>
   <button type="button" class="btn btn-primary btn-full" onclick="chooseTechnician('${t.id}');closeModal('techProfileModal')">Choose this technician · QAR ${t.price}</button>`;
   openModal('techProfileModal');
 }
-function chooseTechnician(id){selectedTechnician=id;renderTechnicians();showToast('Technician selected.');}
+function chooseTechnician(id){selectedTechnician=id;selectedStore=null;renderTechnicians();showToast('Technician selected.');}
+function chooseStore(id){
+  selectedStore=id;
+  selectedTechnician=null;
+  renderTechnicians();
+  const store=repairStores[$('category').value].find(x=>x.id===id);
+  $('area').value=store.name+' · '+store.area;
+  $('area').disabled=true;
+  $('mapLocationStatus').textContent='Store selected · '+store.area;
+  showToast('Store selected.');
+}
 function previewIssuePhotos(event){
   const files=[...event.target.files].filter(f=>f.type.startsWith('image/')).slice(0,5);
   $('issuePhotoPreview').innerHTML='';
@@ -142,12 +180,34 @@ function updateQuote(){const c=$('category').value;$('quote').textContent=c?pric
 function isLater(){return document.querySelector('input[name=when]:checked').value==='later'}
 function whenText(){return isLater()?($('date').value+' '+$('time').value).trim():'As soon as possible'}
 function toggleWhen(){$('laterFields').hidden=!isLater();$('date').required=isLater()}
-function renderSummary(){const t=Object.values(technicians).flat().find(x=>x.id===selectedTechnician);$('summary').innerHTML=[['Service : ',$('category').value],['Location : ',$('area').value],['When : ',whenText()],['Technician : ',t?t.name:'Not selected'],['Technician price : ',t?'QAR '+t.price:priceOf($('category').value)]].map(r=>'<div class="row"><span class="muted">'+r[0]+'</span><strong>'+esc(r[1])+'</strong></div>').join('')}
-function setStep(n){step=n;const panes=document.querySelectorAll('.pane');panes.forEach((p,i)=>{p.hidden=i!==n});document.querySelectorAll('.progress i').forEach((b,i)=>b.classList.toggle('on',i<=n));$('bkBack').style.visibility=n?'visible':'hidden';$('submitBooking').textContent=n===3?'Request repair':'Continue';if(n===2)renderSummary();if(n===3)renderTechnicians();const p=panes[n];p.classList.remove('enter-pane');void p.offsetWidth;p.classList.add('enter-pane')}
-function valid(){const p=document.querySelectorAll('.pane')[step];if(step===0&&!$('category').value){showToast('Choose a service to continue.');return false}if(step===3&&!selectedTechnician){showToast('Choose a technician to continue.');return false}const bad=[...p.querySelectorAll('input,textarea')].find(x=>x.required&&!x.checkValidity());if(bad){bad.reportValidity();return false}return true}
-function bkNext(){if(!valid())return;if(step<3){setStep(step+1)}else $('bookingForm').requestSubmit()}
-function bkBack(){if(step>0)setStep(step-1)}
-function openBooking(cat){selectedTechnician=null;$('bookingForm').style.display='block';$('bookingSuccess').style.display='none';$('sheetTop').hidden=false;$('bookingForm').reset();$('issuePhotoPreview').innerHTML='';pickedMapPoint=null;$('mapLocationStatus').textContent='Or pin your exact location on the map.';$('mapCoords').textContent='No pin selected yet.';if(mapMarker&&mapInstance){mapInstance.removeLayer(mapMarker);mapMarker=null;}$('date').min=new Date().toISOString().slice(0,10);toggleWhen();pick(cat||'');setStep(cat?1:0);openModal('bookingModal')}
+function getSelectedProvider(){
+  const storeVisit=document.querySelector('input[name="serviceMethod"]:checked')?.value==='store';
+  if(storeVisit && selectedStore)return repairStores[$('category').value].find(x=>x.id===selectedStore)||null;
+  return Object.values(technicians).flat().find(x=>x.id===selectedTechnician)||null;
+}
+function providerName(){const provider=getSelectedProvider();return provider?provider.name:'Not selected'}
+function renderSummary(){const provider=getSelectedProvider();const store=['Laptop repair','Phone repair'].includes($('category').value)&&document.querySelector('input[name="serviceMethod"]:checked')?.value==='store';$('summary').innerHTML=[['Service : ',$('category').value],['Service option : ',store?'Visit the store':'Technician visits you'],['Location / store : ',store&&provider?provider.name+' · '+provider.area:$('area').value],['When : ',whenText()],['Technician or store : ',providerName()],['Starting price : ',provider&&provider.price?'QAR '+provider.price:priceOf($('category').value)]].map(r=>'<div class="row"><span class="muted">'+r[0]+'</span><strong>'+esc(r[1])+'</strong></div>').join('')}
+function setStep(n){step=n;const panes=document.querySelectorAll('.pane');panes.forEach((p,i)=>{p.hidden=i!==n});document.querySelectorAll('.progress i').forEach((b,i)=>b.classList.toggle('on',i===0?n>=0:i===1?n>=1:i===2?n>=3:n>=3));$('bkBack').style.visibility=n?'visible':'hidden';$('submitBooking').textContent=n===2?'Request repair':'Continue';if(n===1)updateServiceMethod();if(n===2)renderSummary();if(n===3)renderTechnicians();const p=panes[n];p.classList.remove('enter-pane');void p.offsetWidth;p.classList.add('enter-pane')}
+function valid(){const p=document.querySelectorAll('.pane')[step];if(step===0&&!$('category').value){showToast('Choose a service to continue.');return false}if(step===3){const storeVisit=document.querySelector('input[name="serviceMethod"]:checked')?.value==='store';if(storeVisit&&!selectedStore){showToast('Choose a store to continue.');return false}if(!storeVisit&&!selectedTechnician){showToast('Choose a technician to continue.');return false}}const bad=[...p.querySelectorAll('input,textarea')].find(x=>x.required&&!x.checkValidity());if(bad){bad.reportValidity();return false}return true}
+function bkNext(){if(!valid())return;if(step===0)setStep(1);else if(step===1)setStep(3);else if(step===3)setStep(2);else $('bookingForm').requestSubmit()}
+function bkBack(){if(step===2)setStep(3);else if(step===3)setStep(1);else if(step===1)setStep(0)}
+function openBooking(cat){selectedTechnician=null;selectedStore=null;$('bookingForm').style.display='block';$('bookingSuccess').style.display='none';$('sheetTop').hidden=false;$('bookingForm').reset();$('issuePhotoPreview').innerHTML='';pickedMapPoint=null;$('mapLocationStatus').textContent='Or pin your exact location on the map.';$('mapCoords').textContent='No pin selected yet.';if(mapMarker&&mapInstance){mapInstance.removeLayer(mapMarker);mapMarker=null;}$('date').min=new Date().toISOString().slice(0,10);toggleWhen();pick(cat||'');setStep(cat?1:0);openModal('bookingModal')}
+
+function updateServiceMethod(){
+  const mobileRepair=['Laptop repair','Phone repair'].includes($('category').value);
+  $('serviceMethodWrap').hidden=!mobileRepair;
+  toggleServiceMethod();
+}
+function toggleServiceMethod(){
+  const mobileRepair=['Laptop repair','Phone repair'].includes($('category').value);
+  const store=mobileRepair && document.querySelector('input[name="serviceMethod"]:checked')?.value==='store';
+  $('area').disabled=store;
+  $('area').required=!store;
+  selectedStore=null;
+  selectedTechnician=null;
+  if(store){$('area').value='';$('mapLocationStatus').textContent='Choose a store on the next page.';}
+  else{$('area').value='';$('mapLocationStatus').textContent='Or pin your exact location on the map.';}
+}
 
 
 let mapInstance = null, mapMarker = null, pickedMapPoint = null;
@@ -185,8 +245,8 @@ function filterServices(){const q=$('q').value.trim().toLowerCase();let n=0;docu
 function clearSearch(){$('q').value='';filterServices();$('q').focus()}
 function showToast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove('show'),2700)}
 function load(){try{return JSON.parse(localStorage.getItem('trustqatar_requests')||'[]')}catch(e){return[]}}
-function submitBooking(e){e.preventDefault();if(step<3){bkNext();return}if(!valid())return;const b=$('submitBooking');b.disabled=true;b.classList.add('loading');b.textContent='Saving';
-setTimeout(()=>{const chosen=Object.values(technicians).flat().find(x=>x.id===selectedTechnician);const r={id:'TQ-'+Math.floor(100000+Math.random()*900000),category:$('category').value,issue:$('issue').value,area:$('area').value,date:whenText(),technician:chosen?chosen.name:'',price:chosen?'QAR '+chosen.price:'',photos:[...$('issuePhotos').files].map(f=>f.name)};
+function submitBooking(e){e.preventDefault();if(!valid())return;const b=$('submitBooking');b.disabled=true;b.classList.add('loading');b.textContent='Saving';
+setTimeout(()=>{const chosen=getSelectedProvider();const method=document.querySelector('input[name="serviceMethod"]:checked')?.value==='store'?'Visit store':'Technician visit';const r={id:'TQ-'+Math.floor(100000+Math.random()*900000),category:$('category').value,issue:$('issue').value,area:$('area').value,date:whenText(),serviceMethod:['Laptop repair','Phone repair'].includes($('category').value)?method:'Technician visit',technician:providerName(),price:chosen&&chosen.price?'QAR '+chosen.price:'',photos:[...$('issuePhotos').files].map(f=>f.name)};
 let ok=true;try{const all=load();all.unshift(r);localStorage.setItem('trustqatar_requests',JSON.stringify(all))}catch(err){ok=false}
 if(ok){$('savedMessage').textContent='Request '+r.id+' is saved with '+(chosen?chosen.name:'your selected technician')+'. '+(r.photos.length?r.photos.length+' photo(s) attached. ':'')+'Demo only: no technician has been dispatched.';$('bookingForm').style.display='none';$('sheetTop').hidden=true;$('bookingSuccess').style.display='grid'}else{showToast('Could not save this request in your browser.')}
 b.disabled=false;b.classList.remove('loading');b.textContent='Request repair'},550)}

@@ -732,12 +732,13 @@ function updateQuote(){const c=$('category').value;$('quote').textContent=c?pric
 function isLater(){return document.querySelector('input[name=when]:checked').value==='later'}
 function whenText(){return isLater()?($('date').value+' '+$('time').value).trim():'As soon as possible'}
 function toggleWhen(){$('laterFields').hidden=!isLater();$('date').required=isLater()}
-function renderSummary(){const t=Object.values(technicians).flat().find(x=>x.id===selectedTechnician);$('summary').innerHTML=[['Service',$('category').value],['Location',$('area').value],['When',whenText()],['Technician',t?t.name:'Not selected'],['Technician price',t?'QAR '+t.price:priceOf($('category').value)]].map(r=>'<div class="row"><span class="muted">'+r[0]+'</span><strong>'+esc(r[1])+'</strong></div>').join('')}
+function renderSummary(){const t=Object.values(technicians).flat().find(x=>x.id===selectedTechnician);$('summary').innerHTML=[['Service : ',$('category').value],['Location : ',$('area').value],['When : ',whenText()],['Technician : ',t?t.name:'Not selected'],['Technician price ',t?'QAR '+t.price:priceOf($('category').value)]].map(r=>'<div class="row"><span class="muted">'+r[0]+'</span><strong>'+esc(r[1])+'</strong></div>').join('')}
 function setStep(n){step=n;const panes=document.querySelectorAll('.pane');panes.forEach((p,i)=>{p.hidden=i!==n});document.querySelectorAll('.progress i').forEach((b,i)=>b.classList.toggle('on',i<=n));$('bkBack').style.visibility=n?'visible':'hidden';$('submitBooking').textContent=n===3?'Request repair':'Continue';if(n===2)renderSummary();if(n===3)renderTechnicians();const p=panes[n];p.classList.remove('enter-pane');void p.offsetWidth;p.classList.add('enter-pane')}
 function valid(){const p=document.querySelectorAll('.pane')[step];if(step===0&&!$('category').value){showToast('Choose a service to continue.');return false}if(step===3&&!selectedTechnician){showToast('Choose a technician to continue.');return false}const bad=[...p.querySelectorAll('input,textarea')].find(x=>x.required&&!x.checkValidity());if(bad){bad.reportValidity();return false}return true}
 function bkNext(){if(!valid())return;if(step<3){setStep(step+1)}else $('bookingForm').requestSubmit()}
 function bkBack(){if(step>0)setStep(step-1)}
 function openBooking(cat){selectedTechnician=null;$('bookingForm').style.display='block';$('bookingSuccess').style.display='none';$('sheetTop').hidden=false;$('bookingForm').reset();$('issuePhotoPreview').innerHTML='';pickedMapPoint=null;$('mapLocationStatus').textContent='Or pin your exact location on the map.';$('mapCoords').textContent='No pin selected yet.';if(mapMarker&&mapInstance){mapInstance.removeLayer(mapMarker);mapMarker=null;}$('date').min=new Date().toISOString().slice(0,10);toggleWhen();pick(cat||'');setStep(cat?1:0);openModal('bookingModal')}
+
 
 
 let mapInstance = null, mapMarker = null, pickedMapPoint = null;
